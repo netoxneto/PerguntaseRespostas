@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const connection = require('./database/database');
+const questionModel = require('./database/Questions');
 
 connection.authenticate().then(()=>{
     console.log('Database successfully connected!');
