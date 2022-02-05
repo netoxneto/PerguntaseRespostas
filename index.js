@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const connection = require('./database/database');
-const questionModel = require('./database/Questions');
+const questions = require('./database/Questions');
 
 connection.authenticate().then(()=>{
     console.log('Database successfully connected!');
@@ -17,17 +17,44 @@ app.use(bodyParser.urlencoded({extended: false}));
 app.use(bodyParser.json());
 
 app.get("/",(req,res)=>{
-    res.render("index");
+    questions.findAll({raw: true, order:[
+        ['updatedAt','DESC']
+    ]}).then((perguntas)=>{
+        res.render("index", {
+            perguntas: perguntas
+        });
+    });
 });
 
 app.get("/question",(req,res)=>{
     res.render("question");
 });
 
+app.get("/question/:id",(req,res)=>{
+    var id = req.params.id;
+    questions.findOne({
+        where:{id: id}
+    }).then((pergunta)=>{
+        if(pergunta){
+            res.render("qtion", {
+                pergunta: pergunta
+            });
+        }else{
+            res.redirect("/");
+        }
+    });
+});
+
 app.post("/savep", (req,res)=>{
-    var tituto = req.body.titulo;
+    var titulo = req.body.titulo;
     var descricao = req.body.descricao;
-    res.send("Titulo: "+tituto+"<br>"+"Descrição: "+descricao);
+
+    questions.create({
+        title: titulo,
+        description: descricao
+    }).then(()=>{
+        res.redirect("/");
+    });
 });
 
 app.listen(18970,()=>{console.log("Server started successfully!");});
