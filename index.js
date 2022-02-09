@@ -3,6 +3,7 @@ const app = express();
 const bodyParser = require('body-parser');
 const connection = require('./database/database');
 const questions = require('./database/Questions');
+const Resposta = require('./database/Resposta');
 
 connection.authenticate().then(()=>{
     console.log('Database successfully connected!');
@@ -32,12 +33,20 @@ app.get("/question",(req,res)=>{
 
 app.get("/question/:id",(req,res)=>{
     var id = req.params.id;
+
     questions.findOne({
         where:{id: id}
-    }).then((pergunta)=>{
-        if(pergunta){
-            res.render("qtion", {
-                pergunta: pergunta
+    }).then((id)=>{
+        if(id != undefined){
+            Resposta.findAll({where:{
+                questionId: id.id
+            }, order:[
+                ['updatedAt','DESC']
+            ]}).then((respostas)=>{
+                res.render("qtion", {
+                    pergunta: id,
+                    respostas: respostas
+                });
             });
         }else{
             res.redirect("/");
@@ -57,4 +66,17 @@ app.post("/savep", (req,res)=>{
     });
 });
 
-app.listen(18970,()=>{console.log("Server started successfully!");});
+app.post("/resposta",(req,res)=>{
+    var resposta = req.body.resp
+    var questionId =req.body.qId
+
+    Resposta.create({
+        questionId: questionId,
+        corpo: resposta
+    }).then(()=>{
+        res.redirect("/question/"+questionId);
+    });
+    
+});
+
+app.listen(80,()=>{console.log("Server started successfully!");});
